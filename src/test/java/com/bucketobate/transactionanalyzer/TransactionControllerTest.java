@@ -16,6 +16,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,6 +57,7 @@ class TransactionControllerTest {
                 .andReturn();
 
         Number id = JsonPath.read(created.getResponse().getContentAsString(), "$.accepted[0].id");
+        assertThat(created.getResponse().getHeader("Location")).endsWith("/api/transactions/" + id);
 
         mockMvc.perform(get("/api/transactions").param("accountId", "A100"))
                 .andExpect(status().isOk())
@@ -170,6 +172,7 @@ class TransactionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest())
+                .andExpect(header().doesNotExist("Location"))
                 .andExpect(jsonPath("$.accepted", hasSize(0)))
                 .andExpect(jsonPath("$.ignored", hasSize(reasons.length)));
         for (int index = 0; index < reasons.length; index++) {

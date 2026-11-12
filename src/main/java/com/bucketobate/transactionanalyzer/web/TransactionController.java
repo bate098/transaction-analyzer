@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -28,8 +30,14 @@ public class TransactionController {
     @PostMapping
     public ResponseEntity<TransactionBatchResponse> create(@RequestBody List<TransactionRequest> requests) {
         TransactionBatchResponse response = transactionService.createAll(requests);
-        HttpStatus status = response.accepted().isEmpty() ? HttpStatus.BAD_REQUEST : HttpStatus.CREATED;
-        return ResponseEntity.status(status).body(response);
+        if (response.accepted().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(response.accepted().get(0).id())
+                .toUri();
+        return ResponseEntity.created(location).body(response);
     }
 
     @GetMapping

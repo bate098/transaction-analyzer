@@ -18,7 +18,14 @@ The app listens on [http://localhost:8080](http://localhost:8080). Data is store
 
 `POST /api/transactions` accepts a JSON list. Valid rows are saved. Invalid rows are skipped.
 
-A request that saves at least one transaction returns **201**, a body with `accepted` and `ignored`, and a `Location` header for the first saved transaction (`/api/transactions/{id}`). If every row is invalid, the response is **400** with the same body shape. A malformed body, including a single object instead of a list, is **400**.
+A request that saves at least one transaction returns `201`, a body with lists of `accepted` and `ignored` transactions, and a `Location` header for the first saved transaction (`/api/transactions/{id}`). If every row is invalid, the response is `400` with the same body shape. A malformed body, including a single object instead of a list, is **400**.
+The response body is formatted like the following example:
+```json
+{
+"accepted": [ { "id": 1, "accountId": "A100", "type": "credit", "amount": 500, "timestamp": "2026-05-10T10:00:00Z" }, {"id":2,"accountId":"A100","type":"debit","amount":200,"timestamp":"2026-05-10T12:00:00Z"} ],
+"ignored": [ { "index": 4, "reason": "accountId is required" } ]
+}
+```
 
 `GET /api/transactions` lists transactions, optionally filtered with `?accountId=`. `GET /api/transactions/{id}` fetches one. `DELETE /api/transactions/{id}` removes one.
 
@@ -31,6 +38,7 @@ A request that saves at least one transaction returns **201**, a body with `acce
 - `credit` and `debit` are matched case-insensitively and stored in lowercase.
 - The `Location` header points at the first transaction saved from the list, not at every saved row.
 - Duplicate transactions are legitimate. There is no idempotency key or field comparison to drop repeats.
+- Accounts are implicit (derived from transactions), so unknown accounts return empty results rather than 404.
 
 ## Design choices
 
